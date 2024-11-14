@@ -24,7 +24,7 @@
 
 ## ✨ Image to 3D
 
-- DreamGaussian (ICLR 2024 oral)
+- DreamGaussian (ICLR 2024)
 
   paper : https://arxiv.org/pdf/2309.16653
 
@@ -35,3 +35,17 @@
 - InstantMesh
 
   paper : https://arxiv.org/pdf/2404.07191
+
+
+## ✨ Super-resolution
+
+- DRCT (CVPR 2024)
+
+  paper : https://arxiv.org/pdf/2404.00722
+
+- IPG (CVPR 2024)
+
+  paper : https://openaccess.thecvf.com/content/CVPR2024/papers/Tian_Image_Processing_GNN_Breaking_Rigidity_in_Super-Resolution_CVPR_2024_paper.pdf
+
+  
+  
