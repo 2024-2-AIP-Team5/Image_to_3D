@@ -22,4 +22,16 @@
 
   survey : https://arxiv.org/abs/2401.03890
 
-  
+## ✨ Image to 3D
+
+- DreamGaussian (ICLR 2024 oral)
+
+  paper : https://arxiv.org/pdf/2309.16653
+
+- CRM (ECCV 2024)
+
+  paper : https://arxiv.org/pdf/2403.05034
+
+- InstantMesh
+
+  paper : https://arxiv.org/pdf/2404.07191
