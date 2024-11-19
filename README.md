@@ -27,16 +27,19 @@
 - DreamGaussian (ICLR 2024)
 
   paper : https://arxiv.org/pdf/2309.16653
+  
   github : https://github.com/dreamgaussian/dreamgaussian
 
 - CRM (ECCV 2024)
 
   paper : https://arxiv.org/pdf/2403.05034
+  
   github : https://github.com/thu-ml/CRM
   
 - InstantMesh
 
   paper : https://arxiv.org/pdf/2404.07191
+  
   github : https://github.com/TencentARC/InstantMesh
 
 
