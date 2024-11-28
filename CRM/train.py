@@ -33,10 +33,10 @@ from rich import print
 
 def train(config, unk):
     # using pipeline to extract models
-    accelerator, device = setup(config, unk)
+    accelerator, device = setup(config, unk) # accelerator: object to manage multi-gpu training, device: device to run the model
     with PrintContext(f"{'access STAT':-^50}", accelerator.is_main_process):
         print(accelerator.state)
-    dtype = {
+    dtype = {           # data type for the model
         "fp16": torch.float16,
         "fp32": torch.float32,
         "no": torch.float32,
@@ -48,30 +48,30 @@ def train(config, unk):
     ################## load models ##################
     model_config = config.models.config
     model_config = OmegaConf.load(model_config)
-    model = instantiate_from_config(model_config.model)
-    state_dict = torch.load(config.models.resume, map_location="cpu")
+    model = instantiate_from_config(model_config.model) # instantiate the model from the config file
+    state_dict = torch.load(config.models.resume, map_location="cpu") # load the model from the checkpoint
 
     print(model.load_state_dict(state_dict, strict=False))
     print("loaded model from {}".format(config.models.resume))
 
     latest_step = 0
-    if config.get("resume", False):
+    if config.get("resume", False):        # resume training from the last checkpoint
         print("resuming from specified workdir")
         ckpts = os.listdir(config.ckpt_root)
         if len(ckpts) == 0:
             print("no ckpt found")
         else:
-            latest_ckpt = sorted(ckpts, key=lambda x: int(x.split("-")[-1]))[-1]
+            latest_ckpt = sorted(ckpts, key=lambda x: int(x.split("-")[-1]))[-1] # get the latest checkpoint
             latest_step = int(latest_ckpt.split("-")[-1])
             print("loadding ckpt from ", osp.join(config.ckpt_root, latest_ckpt))
-            unet_state_dict = torch.load(
+            unet_state_dict = torch.load( # load the unet model from the checkpoint
                 osp.join(config.ckpt_root, latest_ckpt), map_location="cpu"
             )
             print(model.model.load_state_dict(unet_state_dict, strict=False))
 
     elif config.models.get("resume_unet", None) is not None:
         unet_state_dict = torch.load(config.models.resume_unet, map_location="cpu")
-        print(model.model.load_state_dict(unet_state_dict, strict=False))
+        print(model.model.load_state_dict(unet_state_dict, strict=False)) # strict=False: ignore the mismatched keys
         print(f"______ load unet from {config.models.resume_unet} ______")
     model.to(device)
     model.device = device
@@ -81,13 +81,13 @@ def train(config, unk):
     from torch.optim import AdamW
     from accelerate.utils import DummyOptim
 
-    optimizer_cls = (
+    optimizer_cls = ( # optimizer for the model
         AdamW
         if accelerator.state.deepspeed_plugin is None
         or "optimizer" not in accelerator.state.deepspeed_plugin.deepspeed_config
         else DummyOptim
     )
-    optimizer = optimizer_cls(model.model.parameters(), **config.optimizer)
+    optimizer = optimizer_cls(model.model.parameters(), **config.optimizer) # instantiate the optimizer from the config file
 
     ################# prepare datasets #################
     dataset = instantiate_from_config(config.train_data)
