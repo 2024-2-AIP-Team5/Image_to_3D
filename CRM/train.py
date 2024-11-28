@@ -90,9 +90,9 @@ def train(config, unk):
     optimizer = optimizer_cls(model.model.parameters(), **config.optimizer) # instantiate the optimizer from the config file
 
     ################# prepare datasets #################
-    dataset = instantiate_from_config(config.train_data)
-    eval_dataset = instantiate_from_config(config.eval_data)
-    in_the_wild_images = (
+    dataset = instantiate_from_config(config.train_data) # instantiate the dataset from the config file
+    eval_dataset = instantiate_from_config(config.eval_data) # instantiate the eval dataset from the config file
+    in_the_wild_images = ( # instantiate the in the wild images from the config file
         instantiate_from_config(config.in_the_wild_images)
         if config.get("in_the_wild_images", None) is not None
         else None
@@ -105,24 +105,24 @@ def train(config, unk):
         model,
         optimizer,
         dataloader,
-    ) = accelerator.prepare(model, optimizer, dataloader)
+    ) = accelerator.prepare(model, optimizer, dataloader)  # prepare the model, optimizer, dataloader for the training
 
-    generator = get_data_generator(dataloader, accelerator.is_main_process, "train")
+    generator = get_data_generator(dataloader, accelerator.is_main_process, "train") # get the data generator for the training
     if config.get("sampler", None) is not None:
-        sampler_cls = get_obj_from_str(config.sampler.target)
+        sampler_cls = get_obj_from_str(config.sampler.target) # get the sampler class from the config file
         sampler = sampler_cls(model, device, dtype, **config.sampler.params)
     else:
-        sampler = ImageDreamDiffusion(
+        sampler = ImageDreamDiffusion( # instantiate the image dream diffusion from the config file
             model,
-            mode=config.mode,
+            mode=config.mode, # mode for the image dream diffusion
             num_frames=num_frames,
             device=device,
             dtype=dtype,
-            camera_views=dataset.camera_views,
-            offset_noise=config.get("offset_noise", False),
+            camera_views=dataset.camera_views, # camera views option
+            offset_noise=config.get("offset_noise", False), # offset noise option
             ref_position=dataset.ref_position,
-            random_background=dataset.random_background,
-            resize_rate=dataset.resize_rate,
+            random_background=dataset.random_background, # random background option
+            resize_rate=dataset.resize_rate, # resize rate: resize the image
         )
 
     ################# evaluation code #################
