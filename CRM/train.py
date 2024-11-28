@@ -129,12 +129,12 @@ def train(config, unk):
     def evaluation():
         return_ls = []
         for i in range(
-            accelerator.process_index, len(eval_dataset), accelerator.num_processes
+            accelerator.process_index, len(eval_dataset), accelerator.num_processes # iterate over the eval dataset
         ):
-            cond = eval_dataset[i]["cond"]
+            cond = eval_dataset[i]["cond"] # get the condition from the eval dataset
 
             images = sampler.diffuse("3D assets.", cond, n_test=2)
-            images = np.concatenate(images, 0)
+            images = np.concatenate(images, 0) # concatenate the images to the numpy array
             images = [Image.fromarray(images)]
             return_ls.append(dict(images=images, ident=eval_dataset[i]["ident"]))
         return return_ls
