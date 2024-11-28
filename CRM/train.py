@@ -5,7 +5,7 @@ training script for imagedream
 
 """
 
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf # YAML config system
 import argparse
 from pathlib import Path
 from torch.utils.data import DataLoader
@@ -15,7 +15,7 @@ import os
 import torch
 from PIL import Image
 import numpy as np
-import wandb
+import wandb                    # Tool for logging
 from libs.base_utils import get_data_generator, PrintContext
 from libs.base_utils import (
     setup,
@@ -27,7 +27,7 @@ from libs.base_utils import (
 from absl import logging
 from einops import rearrange
 from imagedream.camera_utils import get_camera
-from libs.sample import ImageDreamDiffusion
+from libs.sample import ImageDreamDiffusion # Image gererative model
 from rich import print
 
 
