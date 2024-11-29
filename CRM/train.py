@@ -200,20 +200,20 @@ def train(config, unk):
             raise NotImplementedError
 
         with torch.no_grad(), accelerator.autocast("cuda"):
-            ip_embed = model.clip_model.encode_image_with_transformer(item["clip_cond"])
-            ip_ = ip_embed.repeat_interleave(num_frames, dim=0)
+            ip_embed = model.clip_model.encode_image_with_transformer(item["clip_cond"]) # encode the image with transformer
+            ip_ = ip_embed.repeat_interleave(num_frames, dim=0) # repeat the image embedding
 
-            ip_img = model.get_first_stage_encoding(
+            ip_img = model.get_first_stage_encoding( # get the first stage encoding
                 model.encode_first_stage(item["vae_cond"])
             )
 
-            gd = rearrange(gd, "B F C H W -> (B F) C H W")
+            gd = rearrange(gd, "B F C H W -> (B F) C H W") # rearrange the gradient descent
 
             latent_target_images = model.get_first_stage_encoding(
                 model.encode_first_stage(gd)
             )
 
-            if gd_type == "fusechannel":
+            if gd_type == "fusechannel": # fuse the channel
                 latent_target_images = rearrange(
                     latent_target_images, "(B F) C H W -> B F C H W", B=bs * 2
                 )
@@ -223,7 +223,7 @@ def train(config, unk):
                     fused_channel_latent, "B F C H W -> (B F) C H W"
                 )
 
-            if item.get("captions", None) is not None:
+            if item.get("captions", None) is not None: # get the captions
                 caption_ls = np.array(item["caption"]).T.reshape((-1, BS)).squeeze()
                 prompt_cond = model.get_learned_conditioning(caption_ls)
             elif item.get("caption", None) is not None:
