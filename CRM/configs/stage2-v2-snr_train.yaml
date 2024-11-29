@@ -66,7 +66,7 @@ config:
   wandb_mode: offline
 
   # training hyperparmeters
-  batch_size: 16 # mini batch size during train
+  batch_size: 32 # mini batch size during train
   dataloader:
     num_workers: 10
     shuffle: true
