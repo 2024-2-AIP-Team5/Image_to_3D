@@ -267,7 +267,7 @@ def train(config, unk):
             optimizer.zero_grad()
             global_step += 1
 
-        total_step = global_step * config.total_batch_size
+        total_step = global_step * config.total_batch_size # calculate the total step
         if total_step > log_step:
             metrics = dict(
                 loss=accelerator.gather(loss.detach().mean()).mean().item(),
@@ -282,7 +282,7 @@ def train(config, unk):
                 logging.info(dct2str(dict(step=total_step, **metrics)))
                 wandb.log(add_prefix(metrics, "train"), step=total_step)
 
-        if total_step > save_step and accelerator.is_main_process:
+        if total_step > save_step and accelerator.is_main_process: # save the model
             logging.info("saving done")
             torch.save(
                 unet.state_dict(), osp.join(config.ckpt_root, f"unet-{total_step}")
@@ -290,11 +290,11 @@ def train(config, unk):
             save_step += config.save_interval
             logging.info("save done")
 
-        if total_step > eval_step:
+        if total_step > eval_step: # evaluate the model
             logging.info("evaluationing")
             unet.eval()
-            return_ls = evaluation()
-            cur_eval_base = osp.join(config.eval_root, f"{total_step:07d}")
+            return_ls = evaluation() # get the evaluation of dataset
+            cur_eval_base = osp.join(config.eval_root, f"{total_step:07d}") # get the current evaluation base
             os.makedirs(cur_eval_base, exist_ok=True)
             for item in return_ls:
                 for i, im in enumerate(item["images"]):
@@ -305,7 +305,7 @@ def train(config, unk):
                         )
                     )
 
-            return_ls2 = evaluation2()
+            return_ls2 = evaluation2() # get the evaluation of in the wild images
             cur_eval_base = osp.join(config.eval_root2, f"{total_step:07d}")
             os.makedirs(cur_eval_base, exist_ok=True)
             for item in return_ls2:
@@ -316,11 +316,11 @@ def train(config, unk):
                             f"{item['ident']}-{i:03d}-{accelerator.process_index}-inthewild.png",
                         )
                     )
-            eval_step += config.eval_interval
+            eval_step += config.eval_interval # update the eval step
             logging.info("evaluation done")
 
         accelerator.wait_for_everyone()
-        if total_step > config.max_step:
+        if total_step > config.max_step: # break the loop if the total step is greater than the max step
             break
 
 
