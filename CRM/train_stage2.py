@@ -27,10 +27,10 @@ def train(config, unk):
     with PrintContext(f"{'access STAT':-^50}", accelerator.is_main_process):
         print(accelerator.state)
     dtype = {
-        "fp16": torch.float16,
+        "fp16": torch.float16, # 혼합 정밀도 학습을 위해 사용
         "fp32": torch.float32,
         "no": torch.float32,
-        "bf16": torch.bfloat16,
+        "bf16": torch.bfloat16, # layer의 parameter가 많을 수록 좋음
     }[accelerator.state.mixed_precision]
     num_frames = config.num_frames
     
