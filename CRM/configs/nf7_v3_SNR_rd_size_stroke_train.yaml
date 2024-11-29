@@ -68,7 +68,7 @@ config:
 
 #  optimizer related
     optimizer:
-        lr: 1e-4
+        lr: 5e-5
     gradient_accumulation_steps: 12
 
 # wandb related parameters
@@ -85,6 +85,6 @@ config:
         drop_last: true
     
     save_interval: 60000
-    log_interval: 5000
+    log_interval: 500
     eval_interval: 30000
     max_step: 10000000
