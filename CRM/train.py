@@ -133,7 +133,7 @@ def train(config, unk):
         ):
             cond = eval_dataset[i]["cond"] # get the condition from the eval dataset
 
-            images = sampler.diffuse("3D assets.", cond, n_test=2)
+            images = sampler.diffuse("3D assets.", cond, n_test=2) # diffuse the images using the image dream diffusion
             images = np.concatenate(images, 0) # concatenate the images to the numpy array
             images = [Image.fromarray(images)]
             return_ls.append(dict(images=images, ident=eval_dataset[i]["ident"]))
@@ -148,9 +148,9 @@ def train(config, unk):
             len(in_the_wild_images),
             accelerator.num_processes,
         ):
-            cond = in_the_wild_images[i]["cond"]
-            images = sampler.diffuse("3D assets.", cond, n_test=2)
-            images = np.concatenate(images, 0)
+            cond = in_the_wild_images[i]["cond"] # get the condition from the in the wild images
+            images = sampler.diffuse("3D assets.", cond, n_test=2) # diffuse the images using the image dream diffusion
+            images = np.concatenate(images, 0) # concatenate the images to the numpy array
             images = [Image.fromarray(images)]
             return_ls.append(dict(images=images, ident=in_the_wild_images[i]["ident"]))
         return return_ls
