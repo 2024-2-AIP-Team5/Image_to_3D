@@ -57,7 +57,7 @@ config:
 
   #  optimizer related
   optimizer:
-    lr: 5e-5 # optimizer learning rate
+    lr: 1e-6 # optimizer learning rate
   gradient_accumulation_steps: 12 # Accumulates gradients over 12 steps before updating weights, effectively increasing the batch size.
 
   # wandb related parameters
