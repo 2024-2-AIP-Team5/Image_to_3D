@@ -155,13 +155,13 @@ def train(config, unk):
             return_ls.append(dict(images=images, ident=in_the_wild_images[i]["ident"]))
         return return_ls
 
-    if latest_step == 0:
+    if latest_step == 0: # initialize the steps for the training 
         global_step = 0
         total_step = 0
         log_step = 0
         eval_step = 0
         save_step = 0
-    else:
+    else: # resume the steps for the training
         global_step = latest_step // config.total_batch_size
         total_step = latest_step
         log_step = latest_step + config.log_interval
@@ -170,16 +170,16 @@ def train(config, unk):
 
     unet = model.model
     while True:
-        item = next(generator)
+        item = next(generator) # get the next item from the generator
         unet.train()
-        bs = item["clip_cond"].shape[0]
-        BS = bs * num_frames
+        bs = item["clip_cond"].shape[0] # batch size
+        BS = bs * num_frames            # total batch size
         item["clip_cond"] = item["clip_cond"].to(device).to(dtype)
         item["vae_cond"] = item["vae_cond"].to(device).to(dtype)
         camera_input = item["cameras"].to(device)
         camera_input = camera_input.reshape((BS, camera_input.shape[-1]))
 
-        gd_type = config.get("gd_type", "pixel")
+        gd_type = config.get("gd_type", "pixel") # get the gradient descent type
         if gd_type == "pixel":
             item["target_images_vae"] = item["target_images_vae"].to(device).to(dtype)
             gd = item["target_images_vae"]
@@ -196,7 +196,7 @@ def train(config, unk):
             gd = torch.cat(
                 (item["target_images_vae"], item["target_images_xyz_vae"]), dim=0
             )
-        else:
+        else: # raise error if the gradient descent type is not supported
             raise NotImplementedError
 
         with torch.no_grad(), accelerator.autocast("cuda"):
