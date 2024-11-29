@@ -94,8 +94,9 @@ def train(config, unk):
         
     
 ################# setup optimizer #################
-    from torch.optim import AdamW
-    from accelerate.utils import DummyOptim
+    from torch.optim import AdamW # pytorch optimizer중 하나로 weight decay를 적용한 optimizer
+    # AdamW optimizer는 가중치감쇠(weight decay)를 적용하고 이는 모델의 가중치를 감소시킴으로써 모델 복잡성 제어하고 overfitting을 완화
+    from accelerate.utils import DummyOptim # deepspeed 와 같은 외부 플러그인에서 옵티마이저를 관리하는 경우 옵티마이저를 대체하기 위해 사용
     optimizer_cls = (
      AdamW
      if accelerator.state.deepspeed_plugin is None
