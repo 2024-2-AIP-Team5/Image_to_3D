@@ -7,7 +7,7 @@ config:
   gd_type: xyz
   # model related
   models:
-    config: imagedream/configs/sd_v2_base_ipmv_chin8_zero_snr.yaml
+    config: imagedream/configs/sd_v2_base_ipmv_chin8_zero_snr.yaml #모델 정의
     resume: release_models/ImageDream/sd-v2.1-base-4view-ipmv.pt
     resume_unet: null
 
