@@ -118,7 +118,7 @@ def train(config, unk):
     if config.get("sampler", None) is not None:
         sampler_cls = get_obj_from_str(config.sampler.target)
         sampler = sampler_cls(model, device, dtype, **config.sampler.params)
-    else:
+    else: # sampler가 없는 경우 ImageDreamDiffusion 사용 (기본 sampler)
         sampler = ImageDreamDiffusion(model, config.mode, num_frames, device, dtype, dataset.camera_views, 
                                   offset_noise=config.get("offset_noise", False),
                                   ref_position=dataset.ref_position,
@@ -150,12 +150,12 @@ def train(config, unk):
 
     unet = model.model
     while True:
-        item = next(generator)
+        item = next(generator) #학습 데이터에서 배치를 반복적으로 가져오는 데이터 생성기
         unet.train()
         bs = item["clip_cond"].shape[0]
         BS = bs * num_frames
         item["clip_cond"] = item["clip_cond"].to(device).to(dtype)
-        item["vae_cond"] = item["vae_cond"].to(device).to(dtype)
+        item["vae_cond"] = item["vae_cond"].to(device).to(dtype) #위에서 설정한 dtype(데이터 정밀도)를 설정
         camera_input = item["cameras"].to(device)
         camera_input = camera_input.reshape((BS, camera_input.shape[-1]))
 
@@ -209,11 +209,13 @@ def train(config, unk):
             }
         
         with torch.autocast("cuda"), accelerator.accumulate(model):
+            # 모델 학습중 diffusion model의 노이즈 학습을 위해 랜덤하게 노이즈 생성
             time_steps = torch.randint(0, model.num_timesteps, (BS,), device=device)
             noise = torch.randn_like(latent_target_images, device=device)
             x_noisy = model.q_sample(latent_target_images, time_steps, noise)
             output = unet(x_noisy, time_steps, **condition, num_frames=num_frames)
             loss = torch.nn.functional.mse_loss(noise, output)
+            # 예측 값과 실제 값의 차이를 계산하여 MSE 손실을 계산
             
             accelerator.backward(loss)
             optimizer.step()
