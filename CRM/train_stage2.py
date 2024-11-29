@@ -199,7 +199,7 @@ def train(config, unk):
                 prompt_cond = model.get_learned_conditioning(item["caption"])
                 prompt_cond = prompt_cond.repeat_interleave(num_frames, dim=0)
             else:
-                prompt_cond = model.get_learned_conditioning(["3D assets."]).repeat(BS, 1, 1)
+                prompt_cond = model.get_learned_conditioning(["3D assets."]).repeat(BS, 1, 1) # 모델 학습을 위한 임베딩
             condition = {
                 "context": prompt_cond,
                 "ip": ip_,
@@ -253,7 +253,7 @@ def train(config, unk):
                     im.save(osp.join(cur_eval_base, f"{item['ident']}-{i:03d}-{accelerator.process_index}-.png"))
                     wandb_image_ls.append(wandb.Image(im, caption=f"{item['ident']}-{i:03d}-{accelerator.process_index}"))
 
-            wandb.log({"eval_samples": wandb_image_ls})
+            wandb.log({"eval_samples": wandb_image_ls}) # 학습 과정에서의 손실, 학습률 등을  wandb를 통해 시각화
             eval_step += config.eval_interval
             logging.info("evaluation done")
 
