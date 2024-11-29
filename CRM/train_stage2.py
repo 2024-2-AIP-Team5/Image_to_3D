@@ -26,8 +26,8 @@ def train(config, unk):
     accelerator, device = setup(config, unk)
     with PrintContext(f"{'access STAT':-^50}", accelerator.is_main_process):
         print(accelerator.state)
-    dtype = {
-        "fp16": torch.float16, # 혼합 정밀도 학습을 위해 사용
+    dtype = { # 혼합 정밀도 학습을 위해 사용
+        "fp16": torch.float16, 
         "fp32": torch.float32,
         "no": torch.float32,
         "bf16": torch.bfloat16, # layer의 parameter가 많을 수록 좋음
@@ -38,10 +38,10 @@ def train(config, unk):
 ################## load models ##################
     model_config = config.models.config
     model_config = OmegaConf.load(model_config)
-    model = instantiate_from_config(model_config.model)
-    state_dict = torch.load(config.models.resume, map_location="cpu")
+    model = instantiate_from_config(model_config.model) # 모델 초기화
+    state_dict = torch.load(config.models.resume, map_location="cpu") 
 
-
+    #input/output channel key
     model_in_conv_keys = ["model.diffusion_model.input_blocks.0.0.weight",]
     in_conv_keys = ["diffusion_model.input_blocks.0.0.weight"]
 
@@ -52,9 +52,9 @@ def train(config, unk):
             p = state_dict[in_key]
             if cur_state_dict is not None:
                 p_cur = cur_state_dict[in_key]
-                print(p_cur.shape, p.shape)
+                print(p_cur.shape, p.shape) # 기존 가중치, 새로운 가중치 shape 확인
                 if p_cur.shape == p.shape:
-                    print(f"skip {in_key} because of same shape")
+                    print(f"skip {in_key} because of same shape") # 크기가 같으면 수정 생략
                     continue
             state_dict[in_key] = torch.cat([p, torch.zeros_like(p)], dim=1) * 0.5
         for out_key in out_keys:
@@ -70,16 +70,17 @@ def train(config, unk):
 
     def wipe_keys(state_dict, keys):
         for key in keys:
-            state_dict.pop(key)
+            state_dict.pop(key) # 필요없는 key 제거
         return state_dict
 
+    # input/output channel이 4개가 아닌 경우
     unet_config = model_config.model.params.unet_config
     is_normal_inout_channel = not (unet_config.params.in_channels != 4 or unet_config.params.out_channels != 4)
 
     if not is_normal_inout_channel:
         state_dict = modify_keys(state_dict, model_in_conv_keys, [], model.state_dict())
         
-    print(model.load_state_dict(state_dict, strict=False))
+    print(model.load_state_dict(state_dict, strict=False)) # 수정된 가중치 print
     print("loaded model from {}".format(config.models.resume))
     if config.models.get("resume_unet", None) is not None:
         unet_state_dict = torch.load(config.models.resume_unet, map_location="cpu")
