@@ -241,11 +241,11 @@ def train(config, unk):
             }
 
         with torch.autocast("cuda"), accelerator.accumulate(model):
-            time_steps = torch.randint(0, model.num_timesteps, (BS,), device=device)
-            noise = torch.randn_like(latent_target_images, device=device)
+            time_steps = torch.randint(0, model.num_timesteps, (BS,), device=device) # get the time steps
+            noise = torch.randn_like(latent_target_images, device=device) # get the noise
             # noise_img, _ = torch.chunk(noise, 2, dim=1)
             # noise = torch.cat((noise_img, noise_img), dim=1)
-            x_noisy = model.q_sample(latent_target_images, time_steps, noise)
+            x_noisy = model.q_sample(latent_target_images, time_steps, noise) # sample the latent target images
             output = unet(x_noisy, time_steps, **condition, num_frames=num_frames)
             reshaped_pred = output.reshape(bs, num_frames, *output.shape[1:]).permute(
                 1, 0, 2, 3, 4
@@ -253,10 +253,10 @@ def train(config, unk):
             reshaped_noise = noise.reshape(bs, num_frames, *noise.shape[1:]).permute(
                 1, 0, 2, 3, 4
             )
-            true_pred = reshaped_pred[: num_frames - 1]
-            fake_pred = reshaped_pred[num_frames - 1 :]
-            true_noise = reshaped_noise[: num_frames - 1]
-            fake_noise = reshaped_noise[num_frames - 1 :]
+            true_pred = reshaped_pred[: num_frames - 1] # get the true prediction
+            fake_pred = reshaped_pred[num_frames - 1 :] # get the fake prediction
+            true_noise = reshaped_noise[: num_frames - 1] # get the true noise
+            fake_noise = reshaped_noise[num_frames - 1 :] # get the fake noise
             loss = (
                 torch.nn.functional.mse_loss(true_noise, true_pred)
                 + torch.nn.functional.mse_loss(fake_noise, fake_pred) * 0
