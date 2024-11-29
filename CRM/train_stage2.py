@@ -47,6 +47,7 @@ def train(config, unk):
 
 
     def modify_keys(state_dict, in_keys, out_keys, cur_state_dict=None):
+        # key를 수정하여 채널을 추가하는 함수
         print("this function only for fuse channel model")
         for in_key in in_keys:
             p = state_dict[in_key]
