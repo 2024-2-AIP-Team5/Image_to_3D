@@ -2,6 +2,8 @@ import numpy as np
 import pymeshlab as pml
 
 
+# 3D 메시를 다루는 함수들을 제공하며 포아송 메쉬 재구성, 메쉬 다순화, 메쉬 정리를 수행
+
 def poisson_mesh_reconstruction(points, normals=None):
     # points/normals: [N, 3] np.ndarray
 
