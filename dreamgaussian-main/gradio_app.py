@@ -4,6 +4,9 @@ from PIL import Image
 import subprocess
 
 
+# 이미지 파일을 업로드하고, 이를 기반으로 3D 모델을 생성하는 Gradio 인터페이스를 구현 
+# 사용자가 이미지를 업로드 하고 파라미터를 설정한 후, 3D 모델을 단계별로 생성할 수 있음
+
 # check if there is a picture uploaded or selected
 def check_img_input(control_image):
     if control_image is None:
