@@ -3,6 +3,9 @@ from scipy.spatial.transform import Rotation as R
 
 import torch
 
+# 카메라의 위치와 회전을 다루는 여러가지 함수와 클래스를 정의 
+
+
 def dot(x, y):
     if isinstance(x, np.ndarray):
         return np.sum(x * y, -1, keepdims=True)
