@@ -34,6 +34,7 @@ class BLIP2():
 
 
 if __name__ == '__main__':
+    # 커맨드라인 인자 parsing 
 
     parser = argparse.ArgumentParser()
     parser.add_argument('path', type=str, help="path to image (png, jpeg, etc.)")
@@ -43,6 +44,7 @@ if __name__ == '__main__':
     parser.add_argument('--recenter', type=bool, default=True, help="recenter, potentially not helpful for multiview zero123")    
     opt = parser.parse_args()
 
+    # rembg 세션 생성 
     session = rembg.new_session(model_name=opt.model)
 
     if os.path.isdir(opt.path):
@@ -67,7 +69,7 @@ if __name__ == '__main__':
         carved_image = rembg.remove(image, session=session) # [H, W, 4]
         mask = carved_image[..., -1] > 0
 
-        # recenter
+        # 이미지 재중앙화
         if opt.recenter:
             print(f'[INFO] recenter...')
             final_rgba = np.zeros((opt.size, opt.size, 4), dtype=np.uint8)
