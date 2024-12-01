@@ -13,6 +13,8 @@ from torchvision import transforms
 from PIL import Image
 import rembg
 
+# 이미지에서 배경을 제거하고, 필요에 따라 이미지를 중심으로 재배치한 후 출력하는 프로그램 
+
 class BLIP2():
     def __init__(self, device='cuda'):
         self.device = device
