@@ -21,6 +21,10 @@
 #  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 #  POSSIBILITY OF SUCH DAMAGE.
 
+
+# 이 코드는 구면조화 함수(Spherical Harmonics, SH)를 평가하고, RGB 색상을 SH로 변환하거나 반대로 변환하는 함수들을 포함한다. 
+
+
 import torch
 
 C0 = 0.28209479177387814
