@@ -11,6 +11,8 @@ import torch.nn.functional as F
 import nvdiffrast.torch as dr
 from mesh import Mesh, safe_normalize
 
+# 3D 메쉬를 렌더링하고 그에 대한 다양한 정볼르 반환하는 딥러닝 모델을 구현 
+
 def scale_img_nhwc(x, size, mag='bilinear', min='bilinear'):
     assert (x.shape[1] >= size[0] and x.shape[2] >= size[1]) or (x.shape[1] < size[0] and x.shape[2] < size[1]), "Trying to magnify image in one dimension and minify in the other"
     y = x.permute(0, 3, 1, 2) # NHWC -> NCHW
