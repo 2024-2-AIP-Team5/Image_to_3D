@@ -121,4 +121,5 @@ def RGB2SH(rgb):
     return (rgb - 0.5) / C0
 
 def SH2RGB(sh):
+    # 구면조화 계수를 RGB 값으로 변환
     return sh * C0 + 0.5
