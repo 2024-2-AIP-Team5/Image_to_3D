@@ -38,7 +38,7 @@ def optimize_stage_2(elevation_slider: float):
 
     return os.path.join('logs', 'tmp.glb')
 
-
+# Gradio 인터페이스 설정 
 if __name__ == "__main__":
     _TITLE = '''DreamGaussian: Generative Gaussian Splatting for Efficient 3D Content Creation'''
 
