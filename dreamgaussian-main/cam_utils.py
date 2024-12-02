@@ -28,20 +28,11 @@ def look_at(campos, target, opengl=True):
     # campos: [N, 3], camera/eye position
     # target: [N, 3], object to look at
     # return: [N, 3, 3], rotation matrix
-    if not opengl:
-        # camera forward aligns with -z
-        forward_vector = safe_normalize(target - campos)
-        up_vector = np.array([0, 1, 0], dtype=np.float32)
-        right_vector = safe_normalize(np.cross(forward_vector, up_vector))
-        up_vector = safe_normalize(np.cross(right_vector, forward_vector))
-    else:
-        # camera forward aligns with +z
-        forward_vector = safe_normalize(campos - target)
-        up_vector = np.array([0, 1, 0], dtype=np.float32)
-        right_vector = safe_normalize(np.cross(up_vector, forward_vector))
-        up_vector = safe_normalize(np.cross(forward_vector, right_vector))
-    R = np.stack([right_vector, up_vector, forward_vector], axis=1)
-    return R
+    forward_vector = safe_normalize(campos - target) if opengl else safe_normalize(target - campos)
+    up_vector = np.array([0, 1, 0], dtype=np.float32)
+    right_vector = safe_normalize(np.cross(up_vector, forward_vector))
+    up_vector = safe_normalize(np.cross(forward_vector, right_vector))
+    return np.stack([right_vector, up_vector, forward_vector], axis=1)
 
 
 # elevation & azimuth to pose (cam2world) matrix
