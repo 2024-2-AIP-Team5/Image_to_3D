@@ -104,9 +104,18 @@ if IS_FLEXICUBES:
 model = model.eval()
 
 # make output directories
-image_path = os.path.join(args.output_path, config_name, 'images')
-mesh_path = os.path.join(args.output_path, config_name, 'meshes')
-video_path = os.path.join(args.output_path, config_name, 'videos')
+os.makedirs(args.output_path, exist_ok=True)
+
+sr_path = os.path.join(args.output_path, 'sr')
+sr_drct_path = os.path.join(args.output_path, 'sr/DRCT')
+sr_ipg_path = os.path.join(args.output_path, 'sr/IPG')
+image_path = os.path.join(args.output_path, 'images')
+mesh_path = os.path.join(args.output_path, 'meshes')
+video_path = os.path.join(args.output_path, 'videos')
+
+os.makedirs(sr_path, exist_ok=True)
+os.makedirs(sr_drct_path, exist_ok=True)
+os.makedirs(sr_ipg_path, exist_ok=True)
 os.makedirs(image_path, exist_ok=True)
 os.makedirs(mesh_path, exist_ok=True)
 os.makedirs(video_path, exist_ok=True)
