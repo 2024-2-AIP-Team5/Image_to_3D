@@ -20,3 +20,15 @@ infer_config:
   model_path: ckpts/instant_mesh_large.ckpt
   texture_resolution: 1024
   render_resolution: 512
+
+finetuning_config:
+  lr: 1e-5
+  epochs: 100
+  StepLR_step_size: 100
+  StepLR_gamma: 0.95
+  one_view: True
+  six_views: False
+  mse_loss_weight: 1
+  lpips_loss_weight: 0.01
+  flexicubes_reg_loss_weight: 0.5
+  save_finetune_result: True
