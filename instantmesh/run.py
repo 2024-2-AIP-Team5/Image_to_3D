@@ -1,5 +1,5 @@
-
 import os
+import sys
 import argparse
 import numpy as np
 import torch
@@ -79,7 +79,14 @@ parser.add_argument('--view', type=int, default=6, choices=[4, 6], help='Number 
 parser.add_argument('--no_rembg', action='store_true', help='Do not remove input background.')
 parser.add_argument('--export_texmap', action='store_true', help='Export a mesh with texture map.')
 parser.add_argument('--save_video', action='store_true', help='Save a circular-view video.')
+parser.add_argument('--gpus', type=str, default="0", help='gpu ids to use.')
+parser.add_argument('--sr', type=str, default='None', choices=["None", "DRCT", "IPG"], help='choose SR model.')
+
 args = parser.parse_args()
+
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
+os.environ["CUDA_VISIBLE_DEVICES"]=args.gpus
+
 seed_everything(args.seed)
 
 ###############################################################################
