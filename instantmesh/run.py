@@ -231,6 +231,121 @@ for idx, image_file in enumerate(input_files):
 # delete pipeline to save memory
 del pipeline
 
+#SR zero123 output -> 6 images
+
+image_files = []
+if args.sr == "DRCT":
+
+    print('Creating SR zero123 output of', name)
+
+    for idx in range(6):
+        img = images[idx].permute(1,2,0).numpy()
+        img = img[..., [2, 1, 0]] 
+        img = torch.from_numpy(np.transpose(img[:, :, [2, 1, 0]], (2, 0, 1))).float()
+        
+        img = img.unsqueeze(0).to(device)
+
+        window_size = 16
+        
+        # inference
+        try:
+            with torch.no_grad():
+                _, _, h_old, w_old = img.size()
+                h_pad = (h_old // window_size + 1) * window_size - h_old
+                w_pad = (w_old // window_size + 1) * window_size - w_old
+                img = torch.cat([img, torch.flip(img, [2])], 2)[:, :, :h_old + h_pad, :]
+                img = torch.cat([img, torch.flip(img, [3])], 3)[:, :, :, :w_old + w_pad]
+                output = output = model_drct(img)
+                output = output[..., :h_old * 4, :w_old * 4]
+
+        except Exception as error:
+            print('Error', error, name)
+        else:
+            # save image
+            output = output.data.squeeze().float().cpu().clamp_(0, 1).numpy()
+            output = np.transpose(output[[2, 1, 0], :, :], (1, 2, 0))
+            output = (output * 255.0).round().astype(np.uint8)
+            cv2.imwrite(os.path.join(sr_drct_path, f'{name}_{idx}.png'), output)
+
+        image_file = os.path.join(sr_drct_path, f'{name}_{idx}.png')
+        print(f"Image saved to {image_file}")
+
+        image_files.append(image_file)
+
+    new_size = (320, 320)
+
+    total_width = new_size[0] * 2
+    total_height = new_size[1] * 3
+
+    new_image = Image.new('RGB', (total_width, total_height), (255, 255, 255))
+
+    for i, image_file in enumerate(image_files):
+        img = Image.open(image_file)
+        img_resized = img.resize(new_size)  
+
+        x_offset = (i % 2) * new_size[0]  
+        y_offset = (i // 2) * new_size[1]  
+        new_image.paste(img_resized, (x_offset, y_offset))
+
+    new_image.save(os.path.join(image_path, f'{name}_after_DRCT.png'))
+
+    images = Image.open(os.path.join(image_path, f'{name}_after_DRCT.png'))
+
+    images = np.asarray(output_image, dtype=np.float32) / 255.0
+    images = torch.from_numpy(images).permute(2, 0, 1).contiguous().float()     # (3, 960, 640)
+    images = rearrange(images, 'c (n h) (m w) -> (n m) c h w', n=3, m=2)        # (6, 3, 320, 320)
+
+    outputs = []
+    outputs.append({'name': name, 'images': images})
+    
+if args.sr == "IPG":
+
+    print('Creating SR zero123 output of', name)
+    import shutil
+
+    for idx in range(6):
+
+        img = images[idx].permute(1, 2, 0).numpy()
+        img = Image.fromarray((img * 255).astype('uint8'))
+        img.save(f'IPG/basicsr/inputs/{name}_{idx}.png')
+
+        eval_cmd = f"python IPG/basicsr/test.py"
+        os.system(eval_cmd)
+
+        image_file = os.path.join(sr_ipg_path, f'{name}_{idx}.png')
+        shutil.copy2(f"IPG/results/visualization/InferenceDataset/{name}_{idx}_IPG_X4.png", image_file)
+        print(f"Image saved to {image_file}")
+
+        os.remove(f'IPG/basicsr/inputs/{name}_{idx}.png') 
+
+        image_files.append(image_file)
+
+    new_size = (320, 320)
+
+    total_width = new_size[0] * 2
+    total_height = new_size[1] * 3
+
+    new_image = Image.new('RGB', (total_width, total_height), (255, 255, 255))
+
+    for i, image_file in enumerate(image_files):
+        img = Image.open(image_file)
+        img_resized = img.resize(new_size)
+
+        x_offset = (i % 2) * new_size[0]  
+        y_offset = (i // 2) * new_size[1]  
+        new_image.paste(img_resized, (x_offset, y_offset))
+
+    new_image.save(os.path.join(image_path, f'{name}_after_IPG.png'))
+
+    images = Image.open(os.path.join(image_path, f'{name}_after_IPG.png'))
+
+    images = np.asarray(output_image, dtype=np.float32) / 255.0
+    images = torch.from_numpy(images).permute(2, 0, 1).contiguous().float()     # (3, 960, 640)
+    images = rearrange(images, 'c (n h) (m w) -> (n m) c h w', n=3, m=2)        # (6, 3, 320, 320)
+
+    outputs = []
+    outputs.append({'name': name, 'images': images})
+
 ###############################################################################
 # Stage 2: Reconstruction.
 ###############################################################################
