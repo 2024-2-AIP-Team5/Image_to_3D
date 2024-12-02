@@ -14,20 +14,16 @@ def check_img_input(control_image):
 
 
 def optimize_stage_1(image_block: Image.Image, preprocess_chk: bool, elevation_slider: float):
-    if not os.path.exists('tmp_data'):
-        os.makedirs('tmp_data')
+    os.makedirs('tmp_data', exist_ok=True)
+    img_path = os.path.join('tmp_data', 'tmp.png' if preprocess_chk else 'tmp_rgba.png')
+    image_block.save(img_path)
+    
     if preprocess_chk:
-        # save image to a designated path
-        image_block.save(os.path.join('tmp_data', 'tmp.png'))
+        subprocess.run(['python', 'process.py', img_path], check=True)
 
-        # preprocess image
-        print(f'python process.py {os.path.join("tmp_data", "tmp.png")}')
-        subprocess.run(f'python process.py {os.path.join("tmp_data", "tmp.png")}', shell=True)
-    else:
-        image_block.save(os.path.join('tmp_data', 'tmp_rgba.png'))
-
-    # stage 1
-    subprocess.run(f'python main.py --config {os.path.join("configs", "image.yaml")} input={os.path.join("tmp_data", "tmp_rgba.png")} save_path=tmp mesh_format=glb elevation={elevation_slider} force_cuda_rast=True', shell=True)
+    subprocess.run(['python', 'main.py', '--config', os.path.join('configs', 'image.yaml'), 
+                    f'input={img_path}', 'save_path=tmp', 'mesh_format=glb',
+                    f'elevation={elevation_slider}', 'force_cuda_rast=True'], check=True)
 
     return os.path.join('logs', 'tmp_mesh.glb')
 
