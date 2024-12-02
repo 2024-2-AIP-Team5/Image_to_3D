@@ -70,7 +70,7 @@ def eval_sh(deg, sh, dirs):
         sh: jnp.ndarray SH coeffs [..., C, (deg + 1) ** 2]
         dirs: jnp.ndarray unit directions [..., 3]
     Returns:
-        [..., C]
+        [..., C] The SH evaluation result at the given directions.
     """
     assert deg <= 4 and deg >= 0
     coeff = (deg + 1) ** 2
