@@ -22,8 +22,8 @@ from src.utils.camera_util import (
 from src.utils.mesh_util import save_obj, save_obj_with_mtl
 from src.utils.infer_util import remove_background, resize_foreground, save_video
 
-
-
+#DRCT
+import cv2
 
 
 ###############################################################################
@@ -111,17 +111,90 @@ os.makedirs(image_path, exist_ok=True)
 os.makedirs(mesh_path, exist_ok=True)
 os.makedirs(video_path, exist_ok=True)
 
-# process input files
-if os.path.isdir(args.input_path):
-    input_files = [
-        os.path.join(args.input_path, file) 
-        for file in os.listdir(args.input_path) 
-        if file.endswith('.png') or file.endswith('.jpg') or file.endswith('.webp')
-    ]
-else:
-    input_files = [args.input_path]
-print(f'Total number of input images: {len(input_files)}')
+# process input files with SR
+if args.sr == "DRCT":
 
+    mpath = ""
+    for path in sys.path:
+        if 'site-packages/basicsr-1.3.4.9-py3.10.egg' in path:
+            mpath = path
+    sys.path.insert(0, mpath)
+
+    from drct.archs.DRCT_arch import *
+
+    # set up model (DRCT-L)
+    model_drct = DRCT(upscale=4, in_chans=3,  img_size= 64, window_size= 16, compress_ratio= 3,squeeze_factor= 30,
+                        conv_scale= 0.01, overlap_ratio= 0.5, img_range= 1., depths= [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
+                        embed_dim= 180, num_heads= [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6], gc= 32,
+                        mlp_ratio= 2, upsampler= 'pixelshuffle', resi_connection= '1conv')
+
+    model_drct.load_state_dict(torch.load("DRCT-L_X4.pth")['params'], strict=True)
+    model_drct.eval()
+    model_drct = model_drct.to(device)
+
+    print('Creating', name+'_DRCT_X4')
+    # read image
+    img = cv2.imread(image_file, cv2.IMREAD_COLOR).astype(np.float32) / 255.
+    img = torch.from_numpy(np.transpose(img[:, :, [2, 1, 0]], (2, 0, 1))).float()
+    
+    #img = torch.from_numpy(np.transpose(img[:, :, [2, 1, 0]], (2, 0, 1))).float()
+    img = img.unsqueeze(0).to(device)
+
+    window_size = 16
+    
+    # inference
+    try:
+        with torch.no_grad():
+            _, _, h_old, w_old = img.size()
+            h_pad = (h_old // window_size + 1) * window_size - h_old
+            w_pad = (w_old // window_size + 1) * window_size - w_old
+            img = torch.cat([img, torch.flip(img, [2])], 2)[:, :, :h_old + h_pad, :]
+            img = torch.cat([img, torch.flip(img, [3])], 3)[:, :, :, :w_old + w_pad]
+            output = output = model_drct(img)
+            output = output[..., :h_old * 4, :w_old * 4]
+
+    except Exception as error:
+        print('Error', error, name)
+    else:
+        # save image
+        output = output.data.squeeze().float().cpu().clamp_(0, 1).numpy()
+        output = np.transpose(output[[2, 1, 0], :, :], (1, 2, 0))
+        output = (output * 255.0).round().astype(np.uint8)
+        cv2.imwrite(os.path.join(sr_drct_path, f'{name}_DRCT_X4.png'), output)
+
+    image_file = os.path.join(sr_drct_path, f'{name}_DRCT_X4.png')
+    print(f"Image saved to {image_file}")
+    name = name + '_DRCT_X4'
+    
+if args.sr == "IPG":
+
+    mpath = ""
+    for path in sys.path:
+        if 'site-packages/basicsr-0.1.0-py3.10.egg' in path:
+            mpath = path
+    sys.path.insert(0, mpath)
+
+    import shutil
+
+    dest_dir = 'IPG/basicsr/inputs'
+
+    file_name = os.path.basename(image_file)
+
+    dest_file = os.path.join(dest_dir, file_name)
+
+    shutil.copy2(image_file, dest_file)
+
+    print('Creating', name+'_IPG_X4')
+
+    eval_cmd = f"python IPG/basicsr/test.py"
+    os.system(eval_cmd)
+
+    image_file = os.path.join(sr_ipg_path, f'{name}_IPG_X4.png')
+    shutil.copy2(f"IPG/results/visualization/InferenceDataset/{name}_IPG_X4.png", image_file)
+    print(f"Image saved to {image_file}")
+    name = name + '_IPG_X4'
+
+    os.remove(dest_file) 
 
 ###############################################################################
 # Stage 1: Multiview generation.
