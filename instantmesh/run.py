@@ -1,6 +1,31 @@
 import os
 import sys
 import argparse
+
+###############################################################################
+# Arguments.
+###############################################################################
+
+parser = argparse.ArgumentParser()
+parser.add_argument('config', type=str, help='Path to config file.')
+parser.add_argument('input_path', type=str, help='Path to input image or directory.')
+parser.add_argument('--output_path', type=str, default='results/', help='Output directory.')
+parser.add_argument('--diffusion_steps', type=int, default=75, help='Denoising Sampling steps.')
+parser.add_argument('--seed', type=int, default=42, help='Random seed for sampling.')
+parser.add_argument('--scale', type=float, default=1.0, help='Scale of generated object.')
+parser.add_argument('--distance', type=float, default=4.5, help='Render distance.')
+parser.add_argument('--view', type=int, default=6, choices=[4, 6], help='Number of input views.')
+parser.add_argument('--no_rembg', action='store_true', help='Do not remove input background.')
+parser.add_argument('--export_texmap', action='store_true', help='Export a mesh with texture map.')
+parser.add_argument('--save_video', action='store_true', help='Save a circular-view video.')
+parser.add_argument('--gpus', type=str, default="0", help='gpu ids to use.')
+parser.add_argument('--sr', type=str, default='None', choices=["None", "DRCT", "IPG"], help='choose SR model.')
+
+args = parser.parse_args()
+
+os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
+os.environ["CUDA_VISIBLE_DEVICES"]=args.gpus
+
 import numpy as np
 import torch
 import rembg
@@ -26,35 +51,8 @@ from src.utils.infer_util import remove_background, resize_foreground, save_vide
 import cv2
 
 
-###############################################################################
-# Arguments.
-###############################################################################
-
-parser = argparse.ArgumentParser()
-parser.add_argument('config', type=str, help='Path to config file.')
-parser.add_argument('input_path', type=str, help='Path to input image or directory.')
-parser.add_argument('--output_path', type=str, default='outputs/', help='Output directory.')
-parser.add_argument('--diffusion_steps', type=int, default=75, help='Denoising Sampling steps.')
-parser.add_argument('--seed', type=int, default=42, help='Random seed for sampling.')
-parser.add_argument('--scale', type=float, default=1.0, help='Scale of generated object.')
-parser.add_argument('--distance', type=float, default=4.5, help='Render distance.')
-parser.add_argument('--view', type=int, default=6, choices=[4, 6], help='Number of input views.')
-parser.add_argument('--no_rembg', action='store_true', help='Do not remove input background.')
-parser.add_argument('--export_texmap', action='store_true', help='Export a mesh with texture map.')
-parser.add_argument('--save_video', action='store_true', help='Save a circular-view video.')
-parser.add_argument('--gpus', type=str, default="0", help='gpu ids to use.')
-parser.add_argument('--sr', type=str, default='None', choices=["None", "DRCT", "IPG"], help='choose SR model.')
-
-args = parser.parse_args()
-
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
-os.environ["CUDA_VISIBLE_DEVICES"]=args.gpus
 
 seed_everything(args.seed)
-
-###############################################################################
-# Stage 0: Configuration.
-###############################################################################
 
 config = OmegaConf.load(args.config)
 config_name = os.path.basename(args.config).replace('.yaml', '')
@@ -64,6 +62,9 @@ infer_config = config.infer_config
 IS_FLEXICUBES = True if config_name.startswith('instant-mesh') else False
 
 device = torch.device('cuda')
+
+image_file = args.input_path
+name = os.path.basename(image_file).split('.')[0]
 
 # load diffusion model
 print('Loading diffusion model ...')
@@ -103,6 +104,7 @@ if IS_FLEXICUBES:
     model.init_flexicubes_geometry(device, fovy=30.0)
 model = model.eval()
 
+
 # make output directories
 os.makedirs(args.output_path, exist_ok=True)
 
@@ -120,7 +122,8 @@ os.makedirs(image_path, exist_ok=True)
 os.makedirs(mesh_path, exist_ok=True)
 os.makedirs(video_path, exist_ok=True)
 
-# process input files with SR
+
+#SR input image
 if args.sr == "DRCT":
 
     mpath = ""
@@ -174,7 +177,7 @@ if args.sr == "DRCT":
     image_file = os.path.join(sr_drct_path, f'{name}_DRCT_X4.png')
     print(f"Image saved to {image_file}")
     name = name + '_DRCT_X4'
-    
+
 if args.sr == "IPG":
 
     mpath = ""
@@ -205,6 +208,7 @@ if args.sr == "IPG":
 
     os.remove(dest_file) 
 
+
 ###############################################################################
 # Stage 1: Multiview generation.
 ###############################################################################
@@ -212,30 +216,29 @@ if args.sr == "IPG":
 rembg_session = None if args.no_rembg else rembg.new_session()
 
 outputs = []
-for idx, image_file in enumerate(input_files):
-    name = os.path.basename(image_file).split('.')[0]
-    print(f'[{idx+1}/{len(input_files)}] Imagining {name} ...')
 
-    # remove background optionally
-    input_image = Image.open(image_file)
-    if not args.no_rembg:
-        input_image = remove_background(input_image, rembg_session)
-        input_image = resize_foreground(input_image, 0.85)
-    
-    # sampling
-    output_image = pipeline(
-        input_image, 
-        num_inference_steps=args.diffusion_steps, 
-    ).images[0]
+print(f'Imagining {name} ...')
 
-    output_image.save(os.path.join(image_path, f'{name}.png'))
-    print(f"Image saved to {os.path.join(image_path, f'{name}.png')}")
+# remove background optionally
+input_image = Image.open(image_file)
+if not args.no_rembg:
+    input_image = remove_background(input_image, rembg_session)
+    input_image = resize_foreground(input_image, 0.85)
 
-    images = np.asarray(output_image, dtype=np.float32) / 255.0
-    images = torch.from_numpy(images).permute(2, 0, 1).contiguous().float()     # (3, 960, 640)
-    images = rearrange(images, 'c (n h) (m w) -> (n m) c h w', n=3, m=2)        # (6, 3, 320, 320)
+# sampling
+output_image = pipeline(
+    input_image, 
+    num_inference_steps=args.diffusion_steps, 
+).images[0]
 
-    outputs.append({'name': name, 'images': images})
+output_image.save(os.path.join(image_path, f'{name}.png'))
+print(f"Image saved to {os.path.join(image_path, f'{name}.png')}")
+
+images = np.asarray(output_image, dtype=np.float32) / 255.0
+images = torch.from_numpy(images).permute(2, 0, 1).contiguous().float()     # (3, 960, 640)
+images = rearrange(images, 'c (n h) (m w) -> (n m) c h w', n=3, m=2)        # (6, 3, 320, 320)
+
+outputs.append({'name': name, 'images': images})
 
 # delete pipeline to save memory
 del pipeline
@@ -306,7 +309,7 @@ if args.sr == "DRCT":
 
     outputs = []
     outputs.append({'name': name, 'images': images})
-    
+
 if args.sr == "IPG":
 
     print('Creating SR zero123 output of', name)
@@ -338,7 +341,7 @@ if args.sr == "IPG":
 
     for i, image_file in enumerate(image_files):
         img = Image.open(image_file)
-        img_resized = img.resize(new_size)
+        img_resized = img.resize(new_size)  
 
         x_offset = (i % 2) * new_size[0]  
         y_offset = (i // 2) * new_size[1]  
@@ -354,7 +357,6 @@ if args.sr == "IPG":
 
     outputs = []
     outputs.append({'name': name, 'images': images})
-
 ###############################################################################
 # Stage 2: Reconstruction.
 ###############################################################################
@@ -373,7 +375,6 @@ def get_render_cameras(batch_size=1, M=120, radius=4.0, elevation=20.0, is_flexi
         cameras = torch.cat([extrinsics, intrinsics], dim=-1)
         cameras = cameras.unsqueeze(0).repeat(batch_size, 1, 1)
     return cameras
-
 
 def render_frames(model, planes, render_cameras, render_size=512, chunk_size=1, is_flexicubes=False):
     """
@@ -403,7 +404,7 @@ chunk_size = 20 if IS_FLEXICUBES else 1
 
 for idx, sample in enumerate(outputs):
     name = sample['name']
-    print(f'[{idx+1}/{len(outputs)}] Creating {name} ...')
+    print(f'Creating {name} ...')
 
     images = sample['images'].unsqueeze(0).to(device)
     images = v2.functional.resize(images, 320, interpolation=3, antialias=True).clamp(0, 1)
