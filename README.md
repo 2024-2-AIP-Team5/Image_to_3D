@@ -91,7 +91,7 @@ python setup_DRCT.py develop
 python setup_IPG.py install
 ```
 
-Put model path to mesh_sr_finetune/
+Put model path to Image_to_3D/
 
 DRCT (DRCT-L_X4): https://drive.google.com/drive/folders/1QJHdSfo-0eFNb96i8qzMJAPw31u9qZ7U
 
@@ -143,7 +143,7 @@ pip install segment_anything
 
 Get **sam_vit_h_4b8939.pth** from https://github.com/facebookresearch/segment-anything?tab=readme-ov-file#model-checkpoints
 
-Put **sam_vit_h_4b8939.pth** to mesh_sr_finetune/
+Put **sam_vit_h_4b8939.pth** to Image_to_3D/
 
 
 segementation.py usage:
